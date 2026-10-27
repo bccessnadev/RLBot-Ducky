@@ -1,0 +1,10 @@
+.git
+.vs
+bob_build
+build-*
+!build-support/
+!build-support/**
+out
+**/Models
+**/*.exe
+**/*.dll

@@ -1,0 +1,16 @@
+[settings]
+agent_id = "RocketForge/ducky/v5.25"
+name = "Ducky"
+loadout_file = "loadout.toml"
+root_dir = "."
+run_command = "RLBot.exe --hivemind on"
+
+hivemind = true
+run_command_linux = "./RLBot --hivemind on"
+[details]
+description = "First multi-mode Soccar bot by Quax. Used as a rubber ducky to help learn how to make a bot."
+developer = "Quax"
+language = "GigaLearn"
+tags = ["1v1", "2v2", "3v3", "teamplay"]
+fun_fact = "Trained with adaptive weights and a critic that predicts each reward separately"
+source_link = "https://github.com/bccessnadev/RLBot-Ducky"

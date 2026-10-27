@@ -1,0 +1,31 @@
+{
+    "action_delay": 7,
+    "action_parser": "DefaultAction",
+    "agent_name": "ducky-agent",
+    "ball_prediction_engine_version": 3,
+    "car_config": "Octane",
+    "decomposed_critic": true,
+    "game_mode": 0,
+    "max_team_size": 3,
+    "obs_builder": "DuckyObs_V2_01",
+    "policy": {
+        "activation_type": 0,
+        "add_layer_norm": true,
+        "add_output_layer": true,
+        "layer_sizes": [
+            512,
+            512,
+            512,
+            256
+        ]
+    },
+    "shared_head": {
+        "activation_type": 0,
+        "add_layer_norm": true,
+        "add_output_layer": false,
+        "layer_sizes": []
+    },
+    "tick_skip": 8,
+    "training_engine_version": 3,
+    "use_ball_prediction": true
+}

@@ -1,0 +1,34 @@
+[workspace]
+package.version = "0.2.12"
+package.edition = "2024"
+package.rust-version = "1.95"
+package.documentation = "https://docs.rs/rocketsim"
+package.homepage = "https://github.com/ZealanL/RocketSim"
+package.repository = "https://github.com/ZealanL/RocketSim"
+package.license = "MIT"
+package.keywords = ["physics", "rocket-league", "simulation"]
+package.categories = ["game-development", "simulation"]
+resolver = "3"
+members = [
+  "rocketsim",
+  "rocketsim_test",
+  "rocketsim_vis",
+]
+
+[workspace.dependencies]
+glam = { version = "0.33.5", features = ["debug-glam-assert"] }
+rustc-hash = "2.1.2"
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+debug = true
+lto = true
+panic = "abort"
+codegen-units = 1
+
+# TODO: Temporary
+[profile.test]
+opt-level = 0
+debug = true
