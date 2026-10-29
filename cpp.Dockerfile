@@ -54,13 +54,35 @@ ENV PATH="/root/.cargo/bin:$PATH"
 RUN cargo install xwin --locked
 RUN xwin --accept-license splat --output /tmp/xwin
 
-# The helper stages only the selected Windows SDK, including an SDK fingerprint.
+# scripts/build_bob.py stages the selected Windows SDK, including an SDK fingerprint.
+# A plain `bob build` (how the RLBot bot pack builds) stages nothing,
+# so CPU builds fall back to the shared bot-pack archive; GPU builds still need the staged CUDA SDK.
 COPY build-support/libtorch/ /tmp/libtorch-win/
 COPY cmake/ReadDevice.cmake /tmp/ReadDevice.cmake
 COPY rlbot/device.txt /tmp/rlbot-device.txt
+ARG LIBTORCH_WINDOWS_CPU_URL=https://github.com/VirxEC/pytorch-archive/releases/download/r-1/botpack_x86_64-windows.tar.xz
 RUN cmake -DDEVICE_FILE=/tmp/rlbot-device.txt -DOUTPUT_FILE=/tmp/rlbot-device \
         -P /tmp/ReadDevice.cmake && \
-    test -f /tmp/libtorch-win/local/lib/torch.lib
+    device="$(cat /tmp/rlbot-device)" && \
+    if [ -f /tmp/libtorch-win/local/lib/torch.lib ]; then \
+        cp -a /tmp/libtorch-win/local /tmp/libtorch-sdk; \
+    elif [ "$device" = cpu ]; then \
+        curl -fsSL -o /tmp/botpack-windows.tar.xz "$LIBTORCH_WINDOWS_CPU_URL" && \
+        mkdir -p /tmp/botpack-windows && \
+        tar -xJf /tmp/botpack-windows.tar.xz -C /tmp/botpack-windows && \
+        rm -f /tmp/botpack-windows.tar.xz && \
+        mkdir -p /tmp/libtorch-sdk/lib && \
+        cp -a /tmp/botpack-windows/torch-archive/torch/include /tmp/libtorch-sdk/ && \
+        for library in torch torch_cpu c10; do \
+            cp /tmp/botpack-windows/torch-archive/torch/lib/"$library".lib /tmp/libtorch-sdk/lib/; \
+        done; \
+    else \
+        echo "error: GPU builds need a staged Windows CUDA LibTorch SDK." >&2; \
+        echo "Run scripts/build_bob.py (or stage build-support/libtorch/local) and retry." >&2; \
+        exit 1; \
+    fi && \
+    test -f /tmp/libtorch-sdk/include/torch/csrc/api/include/torch/version.h && \
+    test -f /tmp/libtorch-sdk/lib/torch.lib
 
 # CUDA builds skip CPU archives entirely. CPU builds also support Linux.
 ARG LIBTORCH_LINUX_CPU_URL=https://github.com/VirxEC/pytorch-archive/releases/download/r-1/botpack_x86_64-linux.tar.xz
@@ -128,7 +150,7 @@ set(CMAKE_EXE_LINKER_FLAGS_INIT
 
 set(CMAKE_TRY_COMPILE_CONFIGURATION Release)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .lib .dll .dll.a .a)
-set(CMAKE_FIND_ROOT_PATH /tmp/xwin/crt /tmp/xwin/sdk /tmp/libtorch-win/local)
+set(CMAKE_FIND_ROOT_PATH /tmp/xwin/crt /tmp/xwin/sdk /tmp/libtorch-sdk)
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
@@ -152,7 +174,7 @@ RUN device="$(cat /tmp/rlbot-device)" && \
     cmake -S . -B build-win -G Ninja \
         -DCMAKE_TOOLCHAIN_FILE=/src/cmake/toolchain-msvc.cmake \
         -DCMAKE_BUILD_TYPE=Release -DRLBOT_DEVICE="$device" \
-        -DLIBTORCH_ROOT=/tmp/libtorch-win/local && \
+        -DLIBTORCH_ROOT=/tmp/libtorch-sdk && \
     cmake --build build-win --target RLBot --parallel "$(nproc)" && \
     mkdir -p /out/x86_64-pc-windows-msvc/000-runtime && \
     cp /src/build-win/RLBot.exe /out/x86_64-pc-windows-msvc/RLBot.exe && \

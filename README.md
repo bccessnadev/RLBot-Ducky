@@ -1,13 +1,17 @@
 # RocketForge submission
 
-GPU inference and team batching are enabled by default. This package contains
-only the selected bot's inference sources and checkpoint, without a dependency
-on the RocketForge installation.
+This package contains only the selected bot's inference sources and checkpoint,
+without a dependency on the RocketForge installation.
+Team batching is enabled by default.
 
 ## Build
 
-Run `python scripts/build_bob.py` with Bob and Docker installed. The helper uses
-the selected Windows SDK from the shared RLBot bot pack. To use a different SDK:
+A CPU package builds with a plain `bob build`:
+without a staged SDK, the Docker build uses the RLBot bot pack's Windows CPU LibTorch archive.
+
+`python scripts/build_bob.py` (with Bob and Docker installed) builds either device.
+The helper stages the selected Windows SDK from the shared RLBot bot pack,
+and GPU packages require it. To use a different SDK:
 
 ```
 python scripts/build_bob.py --libtorch "C:/path/to/libtorch"
@@ -20,8 +24,9 @@ The helper fingerprints the SDK to invalidate Bob's cache when it changes.
 
 ## Device
 
-`rlbot/device.txt` selects `gpu` (default) or `cpu` **before building**. Rebuild
-after changing it. GPU packages support Windows with a compatible NVIDIA GPU
+`rlbot/device.txt` selects `cpu` or `gpu` **before building**. Rebuild
+after changing it. The RLBot bot pack only builds CPU packages.
+GPU packages support Windows with a compatible NVIDIA GPU
 and driver. CPU packages support Windows and Linux. GPU builds never silently
 fall back to CPU. Startup validates CUDA and warms up the actual policy before
 RLBot starts sending live packets.
